@@ -3,6 +3,8 @@ const cors = require('cors');
 const { router: authRouter, requireJwt, requireApiSecret, requireJwtOrApiSecret } = require('./auth');
 const { createConfigRouter } = require('./routes/config');
 const { createSlotsRouter } = require('./routes/slots');
+const { createAppointmentsRouter } = require('./routes/appointments');
+const { createContactsRouter } = require('./routes/contacts');
 
 function createApp(db) {
   const app = express();
@@ -14,6 +16,8 @@ function createApp(db) {
   app.use('/auth', authRouter);
   app.use('/config', createConfigRouter(db, { requireJwt, requireApiSecret }));
   app.use('/slots', createSlotsRouter(db, { requireJwt, requireJwtOrApiSecret }));
+  app.use('/appointments', createAppointmentsRouter(db, { requireJwt, requireApiSecret }));
+  app.use('/contacts', createContactsRouter(db, { requireJwt }));
 
   return app;
 }
