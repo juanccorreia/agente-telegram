@@ -31,7 +31,7 @@ function runMigrations(db) {
     );
     CREATE TABLE IF NOT EXISTS appointments (
       id          TEXT PRIMARY KEY,
-      slot_id     TEXT NOT NULL,
+      slot_id     TEXT NOT NULL UNIQUE,
       name        TEXT NOT NULL,
       telegram_id TEXT NOT NULL,
       created_at  TEXT NOT NULL
