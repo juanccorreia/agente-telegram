@@ -16,6 +16,9 @@ test('POST /auth/login with correct password returns token', async () => {
     .send({ password: 'testpass123' });
   expect(res.status).toBe(200);
   expect(typeof res.body.token).toBe('string');
+  const jwt = require('jsonwebtoken');
+  const payload = jwt.verify(res.body.token, 'test_jwt_secret');
+  expect(payload.role).toBe('admin');
 });
 
 test('POST /auth/login with wrong password returns 401', async () => {
@@ -33,4 +36,12 @@ test('GET /config without token returns 401', async () => {
 test('GET /config/bot without API_SECRET returns 401', async () => {
   const res = await request(app).get('/config/bot');
   expect(res.status).toBe(401);
+});
+
+test('GET /slots with API_SECRET bypasses JWT check', async () => {
+  const res = await request(app)
+    .get('/slots')
+    .set({ Authorization: `Bearer ${process.env.API_SECRET}` });
+  // /slots doesn't exist yet, so 404 is fine — what matters is it's not 401
+  expect(res.status).not.toBe(401);
 });

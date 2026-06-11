@@ -14,6 +14,7 @@ function createApp(db) {
   // Placeholder routes for auth tests — replaced in later tasks
   app.get('/config', requireJwt, (_req, res) => res.json({}));
   app.get('/config/bot', requireApiSecret, (_req, res) => res.json({}));
+  app.get('/slots', requireJwtOrApiSecret, (_req, res) => res.json([]));
 
   return app;
 }
