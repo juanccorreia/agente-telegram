@@ -1,3 +1,5 @@
+const { google } = require('googleapis');
+
 async function appendAppointmentToSheet(db, appointment) {
   const credentialsRow = db.prepare("SELECT value FROM config WHERE key = 'google_credentials_json'").get();
   const sheetIdRow = db.prepare("SELECT value FROM config WHERE key = 'google_sheet_id'").get();
@@ -7,7 +9,6 @@ async function appendAppointmentToSheet(db, appointment) {
   const credentials = JSON.parse(credentialsRow.value);
   const spreadsheetId = sheetIdRow.value;
 
-  const { google } = require('googleapis');
   const auth = new google.auth.GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
