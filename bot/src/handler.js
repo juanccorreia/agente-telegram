@@ -29,41 +29,52 @@ async function onMessage(ctx) {
 
   const messages = getHistory(chatId);
 
-  const result = await askClaude({
-    apiKey: config.anthropic_api_key,
-    systemPrompt,
-    messages,
-  });
+  try {
+    const result = await askClaude({
+      apiKey: config.anthropic_api_key,
+      systemPrompt,
+      messages,
+    });
 
-  if (result.type === 'tool_use') {
-    const { name, slot_id } = result.input;
-    try {
-      await createAppointment({ slot_id, name, telegram_id: chatId });
+    if (result.type === 'tool_use') {
+      const { name, slot_id } = result.input;
+      try {
+        await createAppointment({ slot_id, name, telegram_id: chatId });
 
-      addMessage(chatId, 'assistant', [
-        { type: 'tool_use', id: result.toolUseId, name: 'book_appointment', input: result.input },
-      ]);
-      addMessage(chatId, 'user', [
-        { type: 'tool_result', tool_use_id: result.toolUseId, content: 'Agendamento criado com sucesso.' },
-      ]);
+        addMessage(chatId, 'assistant', [
+          { type: 'tool_use', id: result.toolUseId, name: 'book_appointment', input: result.input },
+        ]);
+        addMessage(chatId, 'user', [
+          { type: 'tool_result', tool_use_id: result.toolUseId, content: 'Agendamento criado com sucesso.' },
+        ]);
 
-      const confirmation = await askClaude({
-        apiKey: config.anthropic_api_key,
-        systemPrompt,
-        messages: getHistory(chatId),
-      });
-      const confirmText = confirmation.type === 'text' ? confirmation.text : `Agendamento confirmado para ${name}!`;
-      await ctx.reply(confirmText);
-      clearConversation(chatId);
-    } catch (err) {
-      console.error('Booking failed:', err.message);
-      await ctx.reply('Ocorreu um erro ao registrar o agendamento. Tente novamente.');
+        try {
+          const confirmation = await askClaude({
+            apiKey: config.anthropic_api_key,
+            systemPrompt,
+            messages: getHistory(chatId),
+          });
+          const confirmText = confirmation.type === 'text' ? confirmation.text : `Agendamento confirmado para ${name}!`;
+          await ctx.reply(confirmText);
+          clearConversation(chatId);
+        } catch (err) {
+          console.error('Confirmation call failed:', err.message);
+          await ctx.reply('Agendamento registrado! Até logo.');
+          clearConversation(chatId);
+        }
+      } catch (err) {
+        console.error('Booking failed:', err.message);
+        await ctx.reply('Ocorreu um erro ao registrar o agendamento. Tente novamente.');
+      }
+      return;
     }
-    return;
-  }
 
-  addMessage(chatId, 'assistant', result.text);
-  await ctx.reply(result.text);
+    addMessage(chatId, 'assistant', result.text);
+    await ctx.reply(result.text);
+  } catch (err) {
+    console.error('Claude call failed:', err.message);
+    await ctx.reply('Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.');
+  }
 }
 
 module.exports = { onMessage };
